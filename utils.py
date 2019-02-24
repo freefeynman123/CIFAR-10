@@ -14,8 +14,8 @@ from urllib.request import urlopen, urlretrieve
 import cv2
 import re
 import tarfile
-from keras.applications.resnet50 import preprocess_input
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.resnet50 import preprocess_input
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 def download():
