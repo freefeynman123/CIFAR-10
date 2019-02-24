@@ -1,5 +1,3 @@
-# Script to open files from cifar10 dataset, taken from Alex Krizshewsky website
-
 import pickle
 from collections import defaultdict
 import numpy as np
