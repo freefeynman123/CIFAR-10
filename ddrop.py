@@ -1,5 +1,11 @@
-from keras.layers import Dense, Wrapper
-import keras.backend as K
+"""
+The code presented here was taken from:
+https://github.com/andry9454/KerasDropconnect
+The code is distributed under MIT licence
+"""
+
+from tensorflow.keras.layers import Dense, Wrapper
+import tensorflow.keras.backend as K
 
 
 class DropConnectDense(Dense):

@@ -22,10 +22,14 @@ def plot_pca_results(reduced_data, hue, label_names, title):
 	g.set_title(title)
 
 def plot_umap_results(umap_features, neighbors, hue, label_names):
-    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15,8))
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(17,10))
     axes=ax.flatten()
     for index, (reduced_data, neighbor) in enumerate(zip(umap_features, neighbors)):
-        g = sns.scatterplot(x=reduced_data.T[0], y=reduced_data.T[1], hue=hue, legend = "full",
+        if index==0:
+            legend='full'
+        else:
+            legend=False
+        g = sns.scatterplot(x=reduced_data.T[0], y=reduced_data.T[1], hue=hue, legend = legend,
                            palette = sns.color_palette("Set1", n_colors=10), ax=axes[index])
         legend_handles = g.get_legend_handles_labels()[0]
         g.legend(legend_handles, label_names)

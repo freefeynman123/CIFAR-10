@@ -3,6 +3,7 @@
 import pickle
 from collections import defaultdict
 import numpy as np
+import os
 import time
 from typing import Union
 from functools import wraps
@@ -10,6 +11,7 @@ from skimage.transform import resize
 from sklearn.utils import shuffle
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, urlretrieve
+import cv2
 import re
 import tarfile
 from keras.applications.resnet50 import preprocess_input
@@ -20,7 +22,9 @@ def download():
     """Function to download CIFAR-10 data"""
     try:
         html_body = urlopen("https://www.cs.toronto.edu/~kriz/cifar.html")
-    except
+    except ValueError:
+        print("The webpage address has changed")
+        raise ValueError
     soup = BeautifulSoup(html_body, 'html.parser')
     file_to_download = soup.find(href=re.compile('^.*python.tar.gz$'))
     file = file_to_download.get('href')
@@ -30,6 +34,8 @@ def download():
     tar = tarfile.open('cifar_data.tar.gz', 'r:gz')
     tar.extractall()
     tar.close()
+    #Since we have extracted data from tar.gz we can get rid of it
+    os.remove('cifar_data.tar.gz')
 
 
 def unpickle(file: str):
@@ -71,6 +77,38 @@ def load_cifar_data():
 
     return X_train, Y_train, X_val, Y_val, X_test, Y_test, label_names
 
+
+def hog_features(image: np.ndarray):
+    """
+    Args:
+        image: Image to be processed to histogram of oriented gradients.
+
+    Returns:
+        Numpy array with processed features
+    """
+    g_x = cv2.Sobel(image, cv2.CV_32F, 1, 0)
+    g_y = cv2.Sobel(image, cv2.CV_32F, 0, 1)
+    magnitude, angle = cv2.cartToPolar(g_x, g_y)
+    bin_n = 16  #Number of bins
+    bins = np.int32(bin_n*angle/(2*np.pi))
+
+    size_x = size_y = 8
+    cell_y_num = int(image.shape[0]/size_y)
+    cell_x_num = int(image.shape[1]/size_x)
+    bin_cells = [bins[cell_y*size_y:(cell_y+1)*size_y, cell_x*size_x : (cell_x+1)*size_x] 
+                 for cell_y in range(cell_y_num) for cell_x in range(cell_x_num)]
+    mag_cells = [magnitude[cell_y*size_y:(cell_y + 1) * size_y, cell_x*size_x:(cell_x+1)*size_x]
+                 for cell_y in range(cell_y_num) for cell_x in range(cell_x_num)]
+
+    hists = [np.bincount(bin_cell.ravel(), mag_cell.ravel(), bin_n) for bin_cell, mag_cell in zip(bin_cells, mag_cells)]
+    hist = np.hstack(hists)
+
+    # transform to Hellinger kernel
+    eps = 1e-7
+    hist /= hist.sum() + eps
+    hist = np.sqrt(hist)
+    hist /= np.linalg.norm(hist) + eps
+    return hist
 
 def resize_images(data: Union[np.ndarray, list], target_shape: tuple, preserve_range: bool = True):
     """
@@ -136,7 +174,7 @@ def data_generator(X: Union[np.ndarray, list], Y: Union[np.ndarray, list], batch
 
 class Timer:
     """
-
+    Class providing time execution of our scripts with simple "with" statement
     """
     def __enter__(self):
         self.start = time.time()
@@ -154,6 +192,6 @@ def timeit(f):
         elapsed_time = time.time() - start_time
         print('Elapsed computation time: {:.3f} secs'
               .format(elapsed_time))
-        return (elapsed_time, result)
+        return result
 
     return wrapper
