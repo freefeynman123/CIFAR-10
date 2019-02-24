@@ -1,0 +1,9 @@
+cifar-10-batches-py/
+cifar_data.tar.gz
+.ipynb_checkpoints/
+__pycache__/
+taskenv/
+later_trial.py
+.idea/
+.DS_STORE
+
